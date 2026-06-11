@@ -99,7 +99,8 @@ do
   vim.g.maplocalleader = ' '
 
   -- Set to true if you have a Nerd Font installed and selected in the terminal
-  vim.g.have_nerd_font = false
+  vim.g.have_nerd_font = true
+  vim.o.guifont = "DejaVuSansMono Nerd Font Regular:14:#e-alias"
 
   -- [[ Setting options ]]
   --  See `:help vim.o`
@@ -171,6 +172,20 @@ do
   -- instead raise a dialog asking if you wish to save the current file(s)
   -- See `:help 'confirm'`
   vim.o.confirm = true
+
+  vim.env.COLORTERM = 'truecolor'
+  vim.env.termguicolors = true
+  vim.g.tex_flavor = "latex"
+  vim.g.tex_indent_items = 0
+
+  -- Set tab settings (default):
+  vim.o.softtabstop = 2
+  vim.o.shiftwidth = 2
+  vim.o.tabstop = 2
+  vim.o.expandtab = true
+  vim.o.smarttab = true
+  vim.o.autoindent = true
+
 end
 
 -- ============================================================
@@ -376,9 +391,11 @@ do
     icons = { mappings = vim.g.have_nerd_font },
     -- Document existing key chains
     spec = {
+      { '<leader>f', group = '[F]ind' },
       { '<leader>s', group = '[S]earch', mode = { 'n', 'v' } },
-      { '<leader>t', group = '[T]oggle' },
-      { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } }, -- Enable gitsigns recommended keymaps first
+      { '<leader>t', group = '[T]erminal' },
+      { '<leader>l', group = '[L]SP', icon = { icon = '</>', color = 'orange'}},
+      { '<leader>g', group = '[G]it', mode = { 'n', 'v' } }, -- Enable gitsigns recommended keymaps first
       { 'gr', group = 'LSP Actions', mode = { 'n' } },
     },
   }
@@ -397,10 +414,21 @@ do
     },
   }
 
+  vim.pack.add { gh 'ellisonleao/gruvbox.nvim' }
+  ---@diagnostic disable-next-line: missing-fields
+  require('gruvbox').setup {
+    contrast = "hard",
+    palette_overrides = {},
+    overrides = {},
+    dim_inactive = false,
+    transparent_mode = false,
+  }
+
   -- Load the colorscheme here.
   -- Like many other themes, this one has different styles, and you could load
   -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-  vim.cmd.colorscheme 'tokyonight-night'
+  -- vim.cmd.colorscheme 'tokyonight-night'
+  vim.cmd.colorscheme 'gruvbox'
 
   -- Highlight todo, notes, etc in comments
   vim.pack.add { gh 'folke/todo-comments.nvim' }
