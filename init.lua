@@ -93,25 +93,16 @@ do
   vim.loader.enable()
 
   -- Set <space> as the leader key
-  -- See `:help mapleader`
-  --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
   vim.g.mapleader = ' '
   vim.g.maplocalleader = ' '
 
   -- Set to true if you have a Nerd Font installed and selected in the terminal
   vim.g.have_nerd_font = true
-  vim.o.guifont = "DejaVuSansMono Nerd Font Regular:14:#e-alias"
-
-  -- [[ Setting options ]]
-  --  See `:help vim.o`
-  -- NOTE: You can change these options as you wish!
-  --  For more options, you can see `:help option-list`
+  -- vim.o.guifont = "DejaVuSansMono Nerd Font Regular:14:#e-alias"
+  -- vim.o.guifont = "DejaVuSansM Nerd Font Mono:18:#e-alias"
 
   -- Make line numbers default
   vim.o.number = true
-  -- You can also add relative line numbers, to help with jumping.
-  --  Experiment for yourself to see if you like it!
-  -- vim.o.relativenumber = true
 
   -- Enable mouse mode, can be useful for resizing splits for example!
   vim.o.mouse = 'a'
@@ -124,6 +115,33 @@ do
   --  Remove this option if you want your OS clipboard to remain independent.
   --  See `:help 'clipboard'`
   vim.schedule(function() vim.o.clipboard = 'unnamedplus' end)
+  -- Additional explicit clipboard mappings for Linux:
+  -- Copy to system clipboard (visual mode):
+  vim.keymap.set('v', '<C-c>', '"+y', { desc = 'Copy to system clipboard', silent = true })
+  vim.keymap.set('v', '<leader>y', '"+y', { desc = 'Copy to system clipboard', silent = true })
+  -- Paste from system clipboard:
+  vim.keymap.set('n', '<C-v>', '"+p', { desc = 'Paste from system clipboard', silent = true })
+  vim.keymap.set('v', '<C-v>', '"+p', { desc = 'Paste from system clipboard', silent = true })
+  vim.keymap.set('i', '<C-v>', '<C-r>+', { desc = 'Paste from system clipboard', silent = true })
+  -- Cut to system clipboard (visual mode - delete and copy)
+  vim.keymap.set('v', '<C-x>', '"+d', { desc = 'Cut to system clipboard', silent = true })
+  -- Make visual mode 'd' and 'x' also copy to clipboard (in addition to deleting):
+  -- This makes delete operations also yank to clipboard
+  vim.keymap.set('v', 'd', '"+d', { desc = 'Delete and copy to clipboard', silent = true })
+  vim.keymap.set('v', 'x', '"+d', { desc = 'Delete and copy to clipboard', silent = true })
+  -- Let 'm' cut in visual mode
+  vim.keymap.set('v', 'm', '"+d', { desc = 'Cut selection to clipboard', silent = true })
+  -- Increase/decrease scale
+  vim.g.neovide_scale_factor = 1.0
+  local change_scale_factor = function(delta)
+    vim.g.neovide_scale_factor = vim.g.neovide_scale_factor * delta
+  end
+  vim.keymap.set("n", "<C-=>", function()
+    change_scale_factor(1.25)
+  end)
+  vim.keymap.set("n", "<C-->", function()
+    change_scale_factor(1/1.25)
+  end)
 
   -- Enable break indent
   vim.o.breakindent = true
@@ -135,27 +153,13 @@ do
   vim.o.ignorecase = true
   vim.o.smartcase = true
 
-  -- Keep signcolumn on by default
-  vim.o.signcolumn = 'yes'
-
-  -- Decrease update time
-  vim.o.updatetime = 250
-
-  -- Decrease mapped sequence wait time
-  vim.o.timeoutlen = 300
-
   -- Configure how new splits should be opened
   vim.o.splitright = true
   vim.o.splitbelow = true
+  -- Pick up edits made by external tools when returning to an already-open source buffer
+  vim.o.autoread = true
 
   -- Sets how neovim will display certain whitespace characters in the editor.
-  --  See `:help 'list'`
-  --  and `:help 'listchars'`
-  --
-  --  Notice listchars is set using `vim.opt` instead of `vim.o`.
-  --  It is very similar to `vim.o` but offers an interface for conveniently interacting with tables.
-  --   See `:help lua-options`
-  --   and `:help lua-guide-options`
   vim.o.list = true
   vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
 
