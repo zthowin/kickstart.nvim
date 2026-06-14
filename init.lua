@@ -1,89 +1,3 @@
---[[
-
-=====================================================================
-==================== READ THIS BEFORE CONTINUING ====================
-=====================================================================
-========                                    .-----.          ========
-========         .----------------------.   | === |          ========
-========         |.-""""""""""""""""""-.|   |-----|          ========
-========         ||                    ||   | === |          ========
-========         ||   KICKSTART.NVIM   ||   |-----|          ========
-========         ||                    ||   | === |          ========
-========         ||                    ||   |-----|          ========
-========         ||:Tutor              ||   |:::::|          ========
-========         |'-..................-'|   |____o|          ========
-========         `"")----------------(""`   ___________      ========
-========        /::::::::::|  |::::::::::\  \ no mouse \     ========
-========       /:::========|  |==hjkl==:::\  \ required \    ========
-========      '""""""""""""'  '""""""""""""'  '""""""""""'   ========
-========                                                     ========
-=====================================================================
-=====================================================================
-
-What is Kickstart?
-
-  Kickstart.nvim is *not* a distribution.
-
-  Kickstart.nvim is a starting point for your own configuration.
-    The goal is that you can read every line of code, top-to-bottom, understand
-    what your configuration is doing, and modify it to suit your needs.
-
-    Once you've done that, you can start exploring, configuring and tinkering to
-    make Neovim your own! That might mean leaving Kickstart just the way it is for a while
-    or immediately breaking it into modular pieces. It's up to you!
-
-    If you don't know anything about Lua, I recommend taking some time to read through
-    a guide. One possible example which will only take 10-15 minutes:
-      - https://learnxinyminutes.com/docs/lua/
-
-    After understanding a bit more about Lua, you can use `:help lua-guide` as a
-    reference for how Neovim integrates Lua.
-    - :help lua-guide
-    - (or HTML version): https://neovim.io/doc/user/lua-guide.html
-
-Kickstart Guide:
-
-  TODO: The very first thing you should do is to run the command `:Tutor` in Neovim.
-
-    If you don't know what this means, type the following:
-      - <escape key>
-      - :
-      - Tutor
-      - <enter key>
-
-    (If you already know the Neovim basics, you can skip this step.)
-
-  Once you've completed that, you can continue working through **AND READING** the rest
-  of the kickstart init.lua.
-
-  Next, run AND READ `:help`.
-    This will open up a help window with some basic information
-    about reading, navigating and searching the builtin help documentation.
-
-    This should be the first place you go to look when you're stuck or confused
-    with something. It's one of my favorite Neovim features.
-
-    MOST IMPORTANTLY, we provide a keymap "<space>sh" to [s]earch the [h]elp documentation,
-    which is very useful when you're not exactly sure of what you're looking for.
-
-  I have left several `:help X` comments throughout the init.lua
-    These are hints about where to find more information about the relevant settings,
-    plugins or Neovim features used in Kickstart.
-
-   NOTE: Look for lines like this
-
-    Throughout the file. These are for you, the reader, to help you understand what is happening.
-    Feel free to delete them once you know what you're doing, but they should serve as a guide
-    for when you are first encountering a few different constructs in your Neovim config.
-
-If you experience any errors while trying to install kickstart, run `:checkhealth` for more info.
-
-I hope you enjoy your Neovim journey,
-- TJ
-
-P.S. You can delete this when you're done too. It's your config now! :)
---]]
-
 -- ============================================================
 -- SECTION 1: OPTIONS
 -- Core Neovim settings, leaders, options, basic keymaps, basic autocmds
@@ -93,13 +7,19 @@ do
   vim.loader.enable()
 
   -- Set <space> as the leader key
-  vim.g.mapleader = ' '
+  vim.g.mapleader      = ' '
   vim.g.maplocalleader = ' '
 
   -- Set to true if you have a Nerd Font installed and selected in the terminal
   vim.g.have_nerd_font = true
-  -- vim.o.guifont = "DejaVuSansMono Nerd Font Regular:14:#e-alias"
-  -- vim.o.guifont = "DejaVuSansM Nerd Font Mono:18:#e-alias"
+
+  -- Neovide-only shortcuts from nvim/init.lua
+  if vim.g.neovide then
+    vim.keymap.set('n', '<D-s>', '<Cmd>w<CR>', { desc = 'Save file' })
+  end
+
+  vim.g.loaded_netrw = 1
+  vim.g.loaded_netrwPlugin = 1
 
   -- Make line numbers default
   vim.o.number = true
@@ -113,7 +33,6 @@ do
   -- Sync clipboard between OS and Neovim.
   --  Schedule the setting after `UiEnter` because it can increase startup-time.
   --  Remove this option if you want your OS clipboard to remain independent.
-  --  See `:help 'clipboard'`
   vim.schedule(function() vim.o.clipboard = 'unnamedplus' end)
   -- Additional explicit clipboard mappings for Linux:
   -- Copy to system clipboard (visual mode):
@@ -123,12 +42,24 @@ do
   vim.keymap.set('n', '<C-v>', '"+p', { desc = 'Paste from system clipboard', silent = true })
   vim.keymap.set('v', '<C-v>', '"+p', { desc = 'Paste from system clipboard', silent = true })
   vim.keymap.set('i', '<C-v>', '<C-r>+', { desc = 'Paste from system clipboard', silent = true })
+  -- macOS/Neovide Command-key paste, including paste into terminal buffers.
+  vim.keymap.set({ 'x', 's' }, '<D-c>', '"+y', { desc = 'Copy to system clipboard', silent = true })
+  vim.keymap.set('n', '<D-v>', '"+P', { desc = 'Paste from system clipboard', silent = true })
+  vim.keymap.set('x', '<D-v>', '"+P', { desc = 'Paste from system clipboard', silent = true })
+  vim.keymap.set('i', '<D-v>', '<C-R><C-O>+', { desc = 'Paste from system clipboard', silent = true })
+  vim.keymap.set('c', '<D-v>', '<C-R>+', { desc = 'Paste from system clipboard', silent = true })
+  vim.keymap.set('t', '<D-v>', function()
+    local text = vim.fn.getreg('+')
+    local job_id = vim.b.terminal_job_id
+    if text == nil or text == '' or job_id == nil then return end
+    vim.api.nvim_chan_send(job_id, text)
+  end, { desc = 'Paste into terminal', silent = true })
   -- Cut to system clipboard (visual mode - delete and copy)
-  vim.keymap.set('v', '<C-x>', '"+d', { desc = 'Cut to system clipboard', silent = true })
+  -- vim.keymap.set('v', '<C-x>', '"+d', { desc = 'Cut to system clipboard', silent = true })
   -- Make visual mode 'd' and 'x' also copy to clipboard (in addition to deleting):
   -- This makes delete operations also yank to clipboard
-  vim.keymap.set('v', 'd', '"+d', { desc = 'Delete and copy to clipboard', silent = true })
-  vim.keymap.set('v', 'x', '"+d', { desc = 'Delete and copy to clipboard', silent = true })
+  -- vim.keymap.set('v', 'd', '"+d', { desc = 'Delete and copy to clipboard', silent = true })
+  -- vim.keymap.set('v', 'x', '"+d', { desc = 'Delete and copy to clipboard', silent = true })
   -- Let 'm' cut in visual mode
   vim.keymap.set('v', 'm', '"+d', { desc = 'Cut selection to clipboard', silent = true })
   -- Increase/decrease scale
@@ -151,13 +82,57 @@ do
 
   -- Case-insensitive searching UNLESS \C or one or more capital letters in the search term
   vim.o.ignorecase = true
-  vim.o.smartcase = true
+  vim.o.smartcase  = true
 
   -- Configure how new splits should be opened
   vim.o.splitright = true
   vim.o.splitbelow = true
   -- Pick up edits made by external tools when returning to an already-open source buffer
   vim.o.autoread = true
+
+  local external_change_group = vim.api.nvim_create_augroup('ExternalFileChanges', { clear = true })
+  local external_change_syntax_filetypes = {
+    c      = true,
+    cpp    = true,
+    cuda   = true,
+    objc   = true,
+    objcpp = true,
+  }
+
+  vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHoldI", "TermClose"  }, {
+    group = external_change_group,
+    callback = function()
+      if vim.fn.mode() ~= "c" then
+        vim.cmd("checktime")
+      end
+    end,
+  })
+
+  vim.api.nvim_create_autocmd({ "BufReadPost", "FileChangedShellPost" }, {
+    group = external_change_group,
+    callback = function(args)
+      local bufnr = args.buf
+
+      if not vim.api.nvim_buf_is_valid(bufnr) or vim.bo[bufnr].buftype ~= "" then
+        return
+      end
+
+      vim.schedule(function()
+        if not vim.api.nvim_buf_is_valid(bufnr) or vim.bo[bufnr].buftype ~= "" then
+          return
+        end
+
+        vim.api.nvim_buf_call(bufnr, function()
+          if not external_change_syntax_filetypes[vim.bo.filetype] then
+            return
+          end
+
+          pcall(vim.cmd, "syntax sync fromstart")
+          vim.cmd("redraw!")
+        end)
+      end)
+    end,
+  })
 
   -- Sets how neovim will display certain whitespace characters in the editor.
   vim.o.list = true
@@ -177,18 +152,73 @@ do
   -- See `:help 'confirm'`
   vim.o.confirm = true
 
-  vim.env.COLORTERM = 'truecolor'
-  vim.env.termguicolors = true
-  vim.g.tex_flavor = "latex"
+  vim.env.COLORTERM      = 'truecolor'
+  vim.env.termguicolors  = true
+  vim.g.tex_flavor       = "latex"
   vim.g.tex_indent_items = 0
 
   -- Set tab settings (default):
   vim.o.softtabstop = 2
-  vim.o.shiftwidth = 2
-  vim.o.tabstop = 2
-  vim.o.expandtab = true
-  vim.o.smarttab = true
-  vim.o.autoindent = true
+  vim.o.shiftwidth  = 2
+  vim.o.tabstop     = 2
+  vim.o.expandtab   = true
+  vim.o.smarttab    = true
+  vim.o.autoindent  = true
+
+  -- Return to previous location when reopening file:
+  vim.api.nvim_create_autocmd("BufReadPost", {
+    pattern = "*",
+    callback = function()
+      local mark       = vim.api.nvim_buf_get_mark(0, '"')
+      local line_count = vim.api.nvim_buf_line_count(0)
+      if mark[1] > 0 and mark[1] <= line_count then
+        vim.api.nvim_command('normal! g`"')
+      end
+    end,
+  })
+
+  -- Always show gutter
+  vim.opt.signcolumn = "yes"
+
+  -- Associate filetypes
+  vim.filetype.add({
+    extension = {
+      ["bibtextype"] = "bibtextype",
+      ["dat"] = "dat",
+      ["pf"] = "python",
+      ["h"] = "cpp",
+    }
+  })
+
+  -- Have autocomplete only match up to the longest common substring
+  vim.opt.completeopt:append('longest')
+
+  -- Save swap files to temporary directory:
+  vim.o.swapfile = true
+  vim.o.backupdir = vim.fn.expand('~/.vim/tmp//,.')
+  vim.o.directory = vim.fn.expand('~/.vim/tmp//,.')
+  vim.o.undodir   = vim.fn.expand('~/.vim/tmp//,.')
+
+  -- Set timeout for key sequences:
+  vim.o.timeoutlen = 300
+
+  -- Highlight 'self' in Python:
+  vim.api.nvim_create_autocmd("Syntax", {
+    pattern = "python",
+    callback = function()
+      vim.cmd([[syntax keyword Keyword self]])
+    end,
+  })
+
+  -- Enter insert mode automatically for terminals
+  vim.api.nvim_create_autocmd({ "WinEnter", "BufWinEnter", "TermOpen" }, {
+    callback = function(args)
+      if vim.startswith(vim.api.nvim_buf_get_name(args.buf), "term://") then
+        vim.wo.winhighlight = 'Normal:TerminalNormal,NormalNC:TerminalNormalNC'
+        vim.cmd("startinsert")
+      end
+    end,
+  })
 
 end
 
@@ -238,37 +268,179 @@ do
   -- or just use <C-\><C-n> to exit terminal mode
   vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
-  -- TIP: Disable arrow keys in normal mode
-  -- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
-  -- vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
-  -- vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
-  -- vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
-
   -- Keybinds to make split navigation easier.
-  --  Use CTRL+<hjkl> to switch between windows
-  --
-  --  See `:help wincmd` for a list of all window commands
   vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
   vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
   vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
   vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
-  -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
-  -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
-  -- vim.keymap.set("n", "<C-S-l>", "<C-w>L", { desc = "Move window to the right" })
-  -- vim.keymap.set("n", "<C-S-j>", "<C-w>J", { desc = "Move window to the lower" })
-  -- vim.keymap.set("n", "<C-S-k>", "<C-w>K", { desc = "Move window to the upper" })
-
-  -- [[ Basic Autocommands ]]
-  --  See `:help lua-guide-autocommands`
-
   -- Highlight when yanking (copying) text
-  --  Try it with `yap` in normal mode
-  --  See `:help vim.hl.on_yank()`
   vim.api.nvim_create_autocmd('TextYankPost', {
     desc = 'Highlight when yanking (copying) text',
     group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
     callback = function() vim.hl.on_yank() end,
+  })
+
+  -- Insert newlines without entering insert mode:
+  vim.keymap.set('n', 'oo', ':<C-u>call append(line("."),   repeat([""], v:count1))<CR>', { silent = true })
+  vim.keymap.set('n', 'OO', ':<C-u>call append(line(".")-1,   repeat([""], v:count1))<CR>', { silent = true })
+
+  -- Clear highlights on search when pressing <Esc> in normal mode
+  vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+
+
+  -- Filetype mappings
+
+  -- C++ filetype settings:
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = "cpp",
+    callback = function()
+      vim.opt_local.expandtab   = true
+      vim.opt_local.spell       = true
+    end,
+  })
+
+  -- Shell script filetype settings:
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = { "sh", "bash", "zsh" },
+    callback = function()
+      vim.opt_local.expandtab   = true
+      vim.opt_local.spell       = true
+
+      -- Navigate to next/previous commented line
+      vim.keymap.set('n', '<C-n>', ':/#<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('n', '<C-m>', ':?#<CR>:noh<CR>', { buffer = true, silent = true })
+
+      -- Comment/uncomment current line
+      vim.keymap.set('n', '<C-R>', ':s/^/#/<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('n', '<C-T>', ':s/^#\\s\\?//<CR>:noh<CR>', { buffer = true, silent = true })
+      -- Comment/uncomment visual selection
+      vim.keymap.set('v', '<C-R>', ':s/^/#/<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('v', '<C-T>', ':s/^#\\s\\?//<CR>:noh<CR>', { buffer = true, silent = true })
+    end,
+  })
+
+  -- Python filetype settings:
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = "python",
+    callback = function()
+      vim.opt_local.expandtab   = true
+      vim.opt_local.spell       = true
+
+      -- Navigate to next/previous commented line
+      vim.keymap.set('n', '<C-n>', ':/#<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('n', '<C-m>', ':?#<CR>:noh<CR>', { buffer = true, silent = true })
+
+      -- Comment/uncomment current line
+      vim.keymap.set('n', '<C-R>', ':s/^/#/<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('n', '<C-T>', ':s/^#\\s\\?//<CR>:noh<CR>', { buffer = true, silent = true })
+      -- Comment/uncomment visual selection
+      vim.keymap.set('v', '<C-R>', ':s/^/#/<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('v', '<C-T>', ':s/^#\\s\\?//<CR>:noh<CR>', { buffer = true, silent = true })
+    end,
+  })
+
+  -- Lua filetype settings:
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = "lua",
+    callback = function()
+      vim.opt_local.expandtab   = true
+      vim.opt_local.spell       = true
+
+      -- Navigate to next/previous commented line
+      vim.keymap.set('n', '<C-n>', ':/--<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('n', '<C-m>', ':?--<CR>:noh<CR>', { buffer = true, silent = true })
+
+      -- Comment/uncomment current line
+      vim.keymap.set('n', '<C-R>', ':s/^/--/<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('n', '<C-T>', ':s/^--\\s\\?//<CR>:noh<CR>', { buffer = true, silent = true })
+      -- Comment/uncomment visual selection
+      vim.keymap.set('v', '<C-R>', ':s/^/--/<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('v', '<C-T>', ':s/^--\\s\\?//<CR>:noh<CR>', { buffer = true, silent = true })
+    end,
+  })
+
+  -- LaTeX filetype settings:
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = { "tex", "plaintex" },
+    callback = function()
+      vim.opt_local.shiftwidth  = 4
+      vim.opt_local.tabstop     = 4
+      vim.opt_local.softtabstop = 4
+      vim.opt_local.expandtab   = true
+      vim.opt_local.spell       = true
+
+      -- Navigate to next/previous commented line
+      vim.keymap.set('n', '<C-n>', ':/%<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('n', '<C-m>', ':?%<CR>:noh<CR>', { buffer = true, silent = true })
+
+      -- Comment/uncomment current line
+      vim.keymap.set('n', '<C-R>', ':s/^/%/<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('n', '<C-T>', ':s/^%\\s\\?//<CR>:noh<CR>', { buffer = true, silent = true })
+      -- Comment/uncomment visual selection
+      vim.keymap.set('v', '<C-R>', ':s/^/%/<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('v', '<C-T>', ':s/^%\\s\\?//<CR>:noh<CR>', { buffer = true, silent = true })
+    end,
+  })
+
+  -- DAT filetype settings:
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = "dat",
+    callback = function()
+      vim.opt_local.expandtab   = true
+      vim.opt_local.spell       = true
+
+      -- Navigate to next/previous commented line
+      vim.keymap.set('n', '<C-n>', ':/#<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('n', '<C-m>', ':?#<CR>:noh<CR>', { buffer = true, silent = true })
+
+      -- Comment/uncomment current line
+      vim.keymap.set('n', '<C-R>', ':s/^/#/<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('n', '<C-T>', ':s/^#\\s\\?//<CR>:noh<CR>', { buffer = true, silent = true })
+      -- Comment/uncomment visual selection
+      vim.keymap.set('v', '<C-R>', ':s/^/#/<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('v', '<C-T>', ':s/^#\\s\\?//<CR>:noh<CR>', { buffer = true, silent = true })
+    end,
+  })
+
+  -- TXT filetype settings:
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = "txt",
+    callback = function()
+      vim.opt_local.expandtab   = true
+      vim.opt_local.spell       = true
+
+      -- Navigate to next/previous commented line
+      vim.keymap.set('n', '<C-n>', ':/#<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('n', '<C-m>', ':?#<CR>:noh<CR>', { buffer = true, silent = true })
+
+      -- Comment/uncomment current line
+      vim.keymap.set('n', '<C-R>', ':s/^/#/<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('n', '<C-T>', ':s/^#\\s\\?//<CR>:noh<CR>', { buffer = true, silent = true })
+      -- Comment/uncomment visual selection
+      vim.keymap.set('v', '<C-R>', ':s/^/#/<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('v', '<C-T>', ':s/^#\\s\\?//<CR>:noh<CR>', { buffer = true, silent = true })
+    end,
+  })
+
+  -- TXT filetype settings:
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = "vim",
+    callback = function()
+      vim.opt_local.expandtab   = true
+      vim.opt_local.spell       = true
+
+      -- Navigate to next/previous commented line
+      vim.keymap.set('n', '<C-n>', ':/#<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('n', '<C-m>', ':?#<CR>:noh<CR>', { buffer = true, silent = true })
+
+      -- Comment/uncomment current line
+      vim.keymap.set('n', '<C-R>', ':s/^/#/<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('n', '<C-T>', ':s/^#\\s\\?//<CR>:noh<CR>', { buffer = true, silent = true })
+      -- Comment/uncomment visual selection
+      vim.keymap.set('v', '<C-R>', ':s/^/#/<CR>:noh<CR>', { buffer = true, silent = true })
+      vim.keymap.set('v', '<C-T>', ':s/^#\\s\\?//<CR>:noh<CR>', { buffer = true, silent = true })
+    end,
   })
 end
 
@@ -277,26 +449,6 @@ end
 -- vim.pack intro, build hooks
 -- ============================================================
 do
-  -- [[ Intro to `vim.pack` ]]
-  -- `vim.pack` is a new plugin manager built into Neovim,
-  --  which provides a Lua interface for installing and managing plugins.
-  --
-  --  See `:help vim.pack`, `:help vim.pack-examples` or the
-  --  excellent blog post from the creator of vim.pack and mini.nvim:
-  --  https://echasnovski.com/blog/2026-03-13-a-guide-to-vim-pack
-  --
-  --  To inspect plugin state and pending updates, run
-  --    :lua vim.pack.update(nil, { offline = true })
-  --
-  --  To update plugins, run
-  --    :lua vim.pack.update()
-  --
-  --
-  --  Throughout the rest of the config there will be examples
-  --  of how to install and configure plugins using `vim.pack`.
-  --
-  --  In this section we set up some autocommands to run build
-  --  steps for certain plugins after they are installed or updated.
 
   local function run_build(name, cmd, cwd)
     local result = vim.system(cmd, { cwd = cwd }):wait()
@@ -309,10 +461,6 @@ do
     end
   end
 
-  -- This autocommand runs after a plugin is installed or updated and
-  --  runs the appropriate build command for that plugin if necessary.
-  --
-  -- See `:help vim.pack-events`
   vim.api.nvim_create_autocmd('PackChanged', {
     callback = function(ev)
       local name = ev.data.spec.name
@@ -349,33 +497,31 @@ local function gh(repo) return 'https://github.com/' .. repo end
 -- guess-indent, gitsigns, which-key, colorscheme, todo-comments, mini modules
 -- ============================================================
 do
-  -- [[ Installing and Configuring Plugins ]]
-  --
-  -- To install a plugin simply call `vim.pack.add` with its git url.
-  -- This will download the default branch of the plugin, which will usually be `main` or `master`
-  -- You can also have more advanced specs, which we will talk about later.
-  --
-  -- For most plugins its not enough to install them, you also need to call their `.setup()` to start them.
-  --
-  -- For example, lets say we want to install `guess-indent.nvim` - a plugin for
-  -- automatically detecting and setting the indentation.
-  --
-  -- We first install it from https://github.com/NMAC427/guess-indent.nvim
-  -- and then call its `setup()` function to start it with default settings.
   vim.pack.add { gh 'NMAC427/guess-indent.nvim' }
-  require('guess-indent').setup {}
+  require('guess-indent').setup {
+    opts = {
+      filetype_exclude = { "netrw", "tutor", "tex", "plaintex" }
+    }
+  }
 
-  -- Because lua is a real programming language, you can also have some logic to your installation -
-  -- like only installing a plugin if a condition is met.
-  --
-  -- Here we only install `nvim-web-devicons` (which adds pretty icons) if we have a Nerd Font,
-  -- since otherwise the icons won't display properly.
   if vim.g.have_nerd_font then vim.pack.add { gh 'nvim-tree/nvim-web-devicons' } end
 
-  -- Here is a more advanced configuration example that passes options to `gitsigns.nvim`
-  --
-  -- See `:help gitsigns` to understand what each configuration key does.
-  -- Adds git related signs to the gutter, as well as utilities for managing changes
+  -- Show Vim tabs with filetype icons.
+  vim.o.termguicolors = true
+  vim.o.showtabline = 2
+  vim.pack.add { gh 'akinsho/bufferline.nvim' }
+  require('bufferline').setup {
+    options = {
+      mode = 'tabs',
+      themable = true,
+      numbers = 'ordinal',
+      separator_style = 'slant',
+      show_buffer_icons = vim.g.have_nerd_font,
+      show_buffer_close_icons = false,
+      show_close_icon = false,
+    },
+  }
+
   vim.pack.add { gh 'lewis6991/gitsigns.nvim' }
   require('gitsigns').setup {
     signs = {
@@ -402,22 +548,23 @@ do
       { '<leader>g', group = '[G]it', mode = { 'n', 'v' } }, -- Enable gitsigns recommended keymaps first
       { 'gr', group = 'LSP Actions', mode = { 'n' } },
     },
+--    keys = {
+--      {
+--        "<leader>?",
+--        function()
+--          local wk = require("which-key")
+--          wk.show({ global = true })
+--        end,
+--        desc = "Buffer Local Keymaps (which-key)",
+--      },
+--    },
   }
+
+  vim.pack.add { gh 'stevearc/oil.nvim' }
+  require('oil').setup()
+  vim.keymap.set('n', '-', '<CMD>Oil<CR>', { desc = 'Open Oil' })
 
   -- [[ Colorscheme ]]
-  -- You can easily change to a different colorscheme.
-  -- Change the name of the colorscheme plugin below, and then
-  -- change the command under that to load whatever the name of that colorscheme is.
-  --
-  -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-  vim.pack.add { gh 'folke/tokyonight.nvim' }
-  ---@diagnostic disable-next-line: missing-fields
-  require('tokyonight').setup {
-    styles = {
-      comments = { italic = false }, -- Disable italics in comments
-    },
-  }
-
   vim.pack.add { gh 'ellisonleao/gruvbox.nvim' }
   ---@diagnostic disable-next-line: missing-fields
   require('gruvbox').setup {
@@ -427,11 +574,6 @@ do
     dim_inactive = false,
     transparent_mode = false,
   }
-
-  -- Load the colorscheme here.
-  -- Like many other themes, this one has different styles, and you could load
-  -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-  -- vim.cmd.colorscheme 'tokyonight-night'
   vim.cmd.colorscheme 'gruvbox'
 
   -- Highlight todo, notes, etc in comments
@@ -477,8 +619,104 @@ do
   ---@diagnostic disable-next-line: duplicate-set-field
   statusline.section_location = function() return '%2l:%-2v' end
 
-  -- ... and there is more!
-  --  Check out: https://github.com/nvim-mini/mini.nvim
+  require('mini.diff').setup()
+
+end
+
+-- ============================================================
+-- SECTION 4B: TERMINAL
+-- terminal.nvim shortcuts adapted from nvim/init.lua
+-- ============================================================
+do
+  vim.pack.add { gh 'rebelot/terminal.nvim' }
+  require('terminal').setup {
+    cmd = { vim.env.SHELL or vim.o.shell or '/bin/bash' },
+  }
+
+  local function terminal_window_in_current_tab()
+    local current_win = vim.api.nvim_get_current_win()
+    local current_buf = vim.api.nvim_win_get_buf(current_win)
+    if vim.bo[current_buf].buftype == 'terminal' then return current_win end
+
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+      local buf = vim.api.nvim_win_get_buf(win)
+      if vim.bo[buf].buftype == 'terminal' then return win end
+    end
+
+    return nil
+  end
+
+  function _G.OpenTerminalRight()
+    require('terminal').run('', { layout = { open_cmd = 'belowright vnew' } })
+  end
+
+  function _G.TerminalToTab()
+    local term_win = terminal_window_in_current_tab()
+    if term_win == nil then
+      vim.notify('No terminal window in the current tab', vim.log.levels.WARN)
+      return
+    end
+
+    if #vim.api.nvim_tabpage_list_wins(0) == 1 then
+      vim.notify('Terminal is already the only window in this tab', vim.log.levels.INFO)
+      return
+    end
+
+    vim.api.nvim_set_current_win(term_win)
+    vim.cmd('wincmd T')
+  end
+
+  vim.api.nvim_create_user_command('OpenTerminalRight', _G.OpenTerminalRight, {
+    desc = 'Open a new terminal in a right-side vertical split',
+  })
+  vim.api.nvim_create_user_command('TerminalToTab', _G.TerminalToTab, {
+    desc = 'Move the terminal split in the current tab to its own tab',
+  })
+
+  require('terminal').current_term_index()
+
+  local term_map = require('terminal.mappings')
+  vim.keymap.set({ 'n', 'x' }, '<leader>ts', term_map.operator_send, { expr = true, desc = 'Send to terminal' })
+  vim.keymap.set('n', '<leader>to', function()
+    local term = require('terminal')
+    local active = require('terminal.active_terminals')
+    if active:len() == 0 then
+      term.run('', { layout = { open_cmd = 'enew' } })
+    else
+      term.toggle(nil, { open_cmd = 'enew' })
+    end
+  end, { desc = 'Toggle terminal in window' })
+  vim.keymap.set('n', '<leader>tn', function()
+    require('terminal').run('', { layout = { open_cmd = 'enew' } })
+  end, { desc = 'New terminal in window' })
+
+  vim.api.nvim_create_autocmd({ 'WinEnter', 'BufEnter' }, {
+    callback = function(args)
+      local name = vim.api.nvim_buf_get_name(args.buf)
+      if vim.startswith(name, 'term://') then
+        local term = require('terminal')
+        local idx = term.current_term_index()
+        if idx then term.set_target(idx) end
+      end
+    end,
+    desc = 'terminal.nvim: remember last active terminal',
+  })
+
+  vim.keymap.set('n', '<leader>tO', term_map.toggle { open_cmd = 'enew' }, { desc = 'Toggle terminal' })
+  vim.keymap.set('n', '<leader>tr', term_map.run, { desc = 'Run terminal command' })
+  vim.keymap.set('n', '<leader>tR', term_map.run(nil, { layout = { open_cmd = 'enew' } }), { desc = 'Run terminal command in window' })
+  vim.keymap.set('n', '<leader>tk', term_map.kill, { desc = 'Kill terminal' })
+  vim.keymap.set('n', '<leader>t]', term_map.cycle_next, { desc = 'Cycle next terminal' })
+  vim.keymap.set('n', '<leader>t[', term_map.cycle_prev, { desc = 'Cycle previous terminal' })
+  vim.keymap.set('n', '<leader>tv', _G.OpenTerminalRight, { desc = 'Open terminal right' })
+  vim.keymap.set('n', '<leader>tt', _G.TerminalToTab, { desc = 'Move terminal to tab' })
+  vim.keymap.set('n', '<leader>tl', term_map.move { open_cmd = 'belowright vnew' }, { desc = 'Move terminal right' })
+  vim.keymap.set('n', '<leader>tL', term_map.move { open_cmd = 'botright vnew' }, { desc = 'Move terminal far right' })
+  vim.keymap.set('n', '<leader>th', term_map.move { open_cmd = 'belowright new' }, { desc = 'Move terminal below' })
+  vim.keymap.set('n', '<leader>tH', term_map.move { open_cmd = 'botright new' }, { desc = 'Move terminal bottom' })
+  vim.keymap.set('n', '<leader>tf', term_map.move { open_cmd = 'float', border = 'rounded' }, { desc = 'Move terminal floating' })
+  vim.keymap.set('n', ']t', term_map.cycle_next, { desc = 'Next terminal' })
+  vim.keymap.set('n', '[t', term_map.cycle_prev, { desc = 'Previous terminal' })
 end
 
 -- ============================================================
@@ -622,6 +860,9 @@ end
 -- ============================================================
 do
   -- [[ LSP Configuration ]]
+  -- Keep LSP progress messages out of the command/status UI.
+  vim.lsp.handlers['$/progress'] = function() end
+
   -- Brief aside: **What is LSP?**
   --
   -- LSP is an initialism you've probably heard, but might not understand what it is.
@@ -647,9 +888,6 @@ do
   -- If you're wondering about lsp vs treesitter, you can check out the wonderfully
   -- and elegantly composed help section, `:help lsp-vs-treesitter`
 
-  -- Useful status updates for LSP.
-  vim.pack.add { gh 'j-hui/fidget.nvim' }
-  require('fidget').setup {}
 
   --  This function gets run when an LSP attaches to a particular buffer.
   --    That is to say, every time a new file is opened that is associated with
@@ -849,9 +1087,7 @@ do
 
   -- NOTE: You can also specify plugin using a version range for its git tag.
   --  See `:help vim.version.range()` for more info
-  vim.pack.add { { src = gh 'L3MON4D3/LuaSnip', version = vim.version.range '2.*' } }
-  require('luasnip').setup {}
-
+  
   -- `friendly-snippets` contains a variety of premade snippets.
   --    See the README about individual language/framework/plugin snippets:
   --    https://github.com/rafamadriz/friendly-snippets
@@ -903,10 +1139,10 @@ do
     },
 
     sources = {
-      default = { 'lsp', 'path', 'snippets' },
+      default = { 'lsp', 'path' },
     },
 
-    snippets = { preset = 'luasnip' },
+    -- snippets disabled
 
     -- Blink.cmp includes an optional, recommended rust fuzzy matcher,
     -- which automatically downloads a prebuilt binary when enabled.
@@ -957,7 +1193,7 @@ do
     local has_indent_query = vim.treesitter.query.get(language, 'indents') ~= nil
 
     -- Enable treesitter based indentation
-    if has_indent_query then vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()" end
+    if language ~= "lua" and has_indent_query then vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()" end
   end
 
   local available_parsers = require('nvim-treesitter').get_available()
@@ -989,26 +1225,25 @@ end
 -- kickstart.plugins.* examples
 -- ============================================================
 do
-  -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
-  -- init.lua. If you want these files, they are in the repository, so you can just download them and
-  -- place them in the correct locations.
+  -- Disable comment on newline
+  vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
+    pattern = "*",
+    callback = function()
+      vim.opt_local.formatoptions:remove({ "r", "o", "c" })
+    end,
+  })
 
-  -- NOTE: Next step on your Neovim journey: Add/Configure additional plugins for Kickstart
-  --
-  --  Here are some example plugins that I've included in the Kickstart repository.
-  --  Uncomment any of the lines below to enable them (you will need to restart nvim).
-  --
-  -- require 'kickstart.plugins.debug'
-  -- require 'kickstart.plugins.indent_line'
-  -- require 'kickstart.plugins.lint'
-  -- require 'kickstart.plugins.autopairs'
-  -- require 'kickstart.plugins.neo-tree'
-  -- require 'kickstart.plugins.gitsigns' -- adds gitsigns recommended keymaps
+  -- Create an alias for ":lua MiniDiff.toggle_overlay()
+  vim.api.nvim_create_user_command(
+    "DiffToggle",
+    function()
+      MiniDiff.toggle_overlay()
+    end,
+    {
+      desc = "An alias for MiniDiff.toggle_overlay()"
+    }
+  )
 
-  -- NOTE: You can add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
-  --
-  --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- require 'custom.plugins'
 end
 
 -- The line beneath this is called `modeline`. See `:help modeline`
